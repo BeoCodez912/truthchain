@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>TruthChain — Symbolic Blockchain + Live TON</title>
+<title>TruthChain — Symbolic Blockchain + Live TON Wallet</title>
 <style>
 :root{--bg:#060606;--fg:#0f0;--muted:#8f8;--panel:#0b0b0b}
 body{background:var(--bg);color:var(--fg);font-family:ui-monospace,Menlo,Consolas,monospace;padding:18px}
@@ -27,7 +27,7 @@ pre{background:#050505;padding:10px;border-radius:8px;max-height:420px;overflow:
   <div>Address: <span id="addr" class="pill">—</span></div>
   <div id="wallet-balance">Balance: 0 TON ($0)</div>
   <div id="ton-price">Fetching TON price...</div>
-
+  
   <hr/>
   <label>Recipient Address</label>
   <input id="to" placeholder="e.g. UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"/>
@@ -37,7 +37,7 @@ pre{background:#050505;padding:10px;border-radius:8px;max-height:420px;overflow:
     <button id="sendTonButton" disabled>Send TON & Record Block</button>
     <button id="mineButton" disabled>Add Block (no transfer)</button>
   </div>
-
+  
   <hr/>
   <label style="display:block">Withdraw To</label>
   <input id="withdrawTo" placeholder="e.g. UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"/>
@@ -60,7 +60,6 @@ pre{background:#050505;padding:10px;border-radius:8px;max-height:420px;overflow:
   </div>
   <div style="margin-top:8px">Referral: <span id="refLink" class="pill">—</span></div>
   <div style="margin-top:6px">Referral Bonus: <span id="refBonus" class="pill">0</span> TON</div>
-  <pre id="refList" style="margin-top:8px;max-height:120px;overflow:auto;"></pre>
 </div>
 
 <div class="card">
@@ -80,11 +79,15 @@ pre{background:#050505;padding:10px;border-radius:8px;max-height:420px;overflow:
 <pre id="log"></pre>
 
 <script>
-// Blockchain
+// Blockchain classes
 class Block {
   constructor(index,timestamp,data,previousHash=''){
-    this.index=index;this.timestamp=timestamp;this.data=data;this.previousHash=previousHash;
-    this.nonce=0;this.hash=this.calculateHash();
+    this.index=index;
+    this.timestamp=timestamp;
+    this.data=data;
+    this.previousHash=previousHash;
+    this.nonce=0;
+    this.hash=this.calculateHash();
   }
   calculateHash(){
     return CryptoJS.SHA256(this.index+this.timestamp+JSON.stringify(this.data)+this.previousHash+this.nonce).toString();
@@ -92,27 +95,30 @@ class Block {
 }
 
 class Blockchain {
-  #chain; #difficulty;
+  #chain;
+  #difficulty;
   constructor(difficulty=3){
-    this.#chain=[this.createGenesisBlock()]; this.#difficulty=difficulty;
+    this.#chain=[this.createGenesisBlock()];
+    this.#difficulty=difficulty;
   }
-  createGenesisBlock(){ return new Block(0,new Date().toISOString(),{genesis:true},'0'.repeat(64)); }
-  get chain(){ return [...this.#chain]; }
-  get latest(){ return this.#chain[this.#chain.length-1]; }
+  createGenesisBlock(){
+    return new Block(0,new Date().toISOString(),{genesis:true},'0'.repeat(64));
+  }
+  get chain(){return [...this.#chain];}
+  get latest(){return this.#chain[this.#chain.length-1];}
   addBlock(data){
-    const previousHash=this.latest.hash;
-    const index=this.#chain.length;
-    const timestamp=new Date().toISOString();
-    let nonce=0, hash='', prefix='0'.repeat(this.#difficulty);
-    do{ hash=CryptoJS.SHA256(index+timestamp+JSON.stringify(data)+previousHash+nonce).toString(); nonce++; }
-    while(!hash.startsWith(prefix));
-    const b=new Block(index,timestamp,data,previousHash); b.hash=hash; b.nonce=nonce;
-    this.#chain.push(b); return b;
+    const previousHash=this.latest.hash,index=this.#chain.length,timestamp=new Date().toISOString();
+    let nonce=0,hash='',prefix='0'.repeat(this.#difficulty);
+    do{hash=CryptoJS.SHA256(index+timestamp+JSON.stringify(data)+previousHash+nonce).toString();nonce++;}while(!hash.startsWith(prefix));
+    const b=new Block(index,timestamp,data,previousHash);
+    b.hash=hash;b.nonce=nonce;
+    this.#chain.push(b);
+    return b;
   }
 }
 const myChain=new Blockchain();
 
-// unknownTruth chain
+// unknownTruth chain data
 const e=["euGene",5,6,"HEI","EG🎹"];
 const u=["VAV","WAW",6,e];
 const G=["AC🎹","BA🎹","GB🎹","CE🎹","YAHWEH","Gimel",3,"https://unpkg.com/@tonconnect/sdk@0.0.34/dist/tonconnect-sdk.min.js"];
@@ -131,21 +137,27 @@ const test=["ß",(5*50*222/(Phi[0]||1))];
 const teacher=[Immortality.join(","),one.join(","),student];
 const label=[Immortality.join(","),one.join(","),Jesus.join(",")];
 const unknown_Truth_chain=[Phi,"†",x.join(","),one.join(","),Immortality.join(","),Jesus.join(","),Time.join(",")];
-console.log("unknown_Truth_chain:",unknown_Truth_chain);
-console.log("train/latent/feature:",latent,feature,teacher,student,test,label);
 
-// Wallet + live TON
 const log=(msg)=>document.getElementById("log").textContent+=msg+"\n";
-let walletConnected=false;
-let balance=0;
+let walletConnected=false,balance=0;
 const balanceEl=document.getElementById("wallet-balance");
 
-// simulate auto-connect
-walletConnected=true;
-document.querySelectorAll("button").forEach(btn=>btn.disabled=false);
-log("Wallet connected (simulated).");
+// TON Connect integration
+const tonConnect = new TonConnectUI({
+  manifestUrl:'https://beocodez912.github.io/truthchain/tonconnect-manifest.json'
+});
+tonConnect.renderButton(document.getElementById("ton-connect"));
+tonConnect.onStatusChange((wallet)=>{
+  if(wallet){
+    walletConnected=true;
+    document.getElementById("addr").textContent=wallet.account.address;
+    document.querySelectorAll("button").forEach(btn=>btn.disabled=false);
+    log("Wallet connected: "+wallet.account.address);
+    fetchWalletBalance(wallet.account.address);
+  }
+});
 
-// Fetch live TON price
+// Fetch TON price and balance
 let tonPriceUSD=0;
 async function fetchTonPrice(){
   try{
@@ -154,19 +166,43 @@ async function fetchTonPrice(){
     tonPriceUSD=json.rates.ton.prices.USD;
     document.getElementById("ton-price").textContent=`1 TON ≈ $${tonPriceUSD.toFixed(2)} USD`;
     updateBalance();
-  }catch(err){
-    document.getElementById("ton-price").textContent="⚠️ TON price unavailable";
-  }
+  }catch(err){document.getElementById("ton-price").textContent="⚠️ TON price unavailable";}
 }
+
+async function fetchWalletBalance(address){
+  try{
+    const res=await fetch(`https://tonapi.io/v1/accounts/${address}`);
+    const data=await res.json();
+    balance=data.balance?parseFloat(data.balance)/1e9:0;
+    updateBalance();
+  }catch(err){log("Failed to fetch wallet balance.");}
+}
+
 function updateBalance(){
   const usd=(balance*tonPriceUSD).toFixed(2);
   balanceEl.textContent=`Balance: ${balance.toFixed(3)} TON ($${usd})`;
 }
-fetchTonPrice();
+
+// Display chain
+function displayChain(){
+  const chainView=myChain.chain.map(b=>`#${b.index} | Hash: ${b.hash.slice(0,12)}... | Data: ${JSON.stringify(b.data)} | Nonce: ${b.nonce}`).join('\n');
+  document.getElementById("log").textContent=chainView;
+}
+
+// Multiplier bar
+function updateMultiplier(multiplier){
+  const multBar=document.getElementById("multBar");
+  const width=Math.min(100,multiplier*10);
+  multBar.style.width=`${width}%`;
+  multBar.textContent=`x${multiplier.toFixed(1)}`;
+}
+
+// Initialize unknownTruth chain display
+unknown_Truth_chain.forEach((v,i)=>log(`#${i}: ${v}`));
 
 // Buttons
 document.getElementById("mineButton").addEventListener("click",()=>{
-  if(!walletConnected) return log("Connect wallet first.");
+  if(!walletConnected)return log("Connect wallet first.");
   const b=myChain.addBlock({reward:1,time:Date.now()});
   balance+=1; updateBalance();
   document.getElementById("latest-hash").textContent=b.hash;
@@ -174,27 +210,45 @@ document.getElementById("mineButton").addEventListener("click",()=>{
 });
 
 document.getElementById("withdrawButton").addEventListener("click",()=>{
-  if(!walletConnected) return log("Connect wallet first.");
-  log("Withdrawing mining value..."); balance=0; updateBalance();
+  if(!walletConnected)return log("Connect wallet first.");
+  const addr=document.getElementById("withdrawTo").value.trim();
+  if(!addr)return log("Enter withdrawal address.");
+  log(`Withdrawing ${balance.toFixed(3)} TON to ${addr} (simulated).`);
+  balance=0; updateBalance();
 });
 
 document.getElementById("depositButton").addEventListener("click",()=>{
-  if(!walletConnected) return log("Connect wallet first.");
-  log("Symbolic deposit for multiplier applied.");
+  if(!walletConnected)return log("Connect wallet first.");
+  const dep=parseFloat(document.getElementById("depositInput").value)||0;
+  log(`Symbolic deposit ${dep} applied.`);
+  updateMultiplier(1+dep);
 });
 
 document.getElementById("referralButton").addEventListener("click",()=>{
-  if(!walletConnected) return log("Connect wallet first.");
-  const referral=`https://earnfromplay.blogspot.com/2025/08/ton-kid-jon.html&referral=USER123`;
-  log("Referral link: "+referral);
+  if(!walletConnected)return log("Connect wallet first.");
+  const ref=document.getElementById("refInput").value.trim()||"USER123";
+  const link=`https://earnfromplay.blogspot.com/2025/08/ton-kid-jon.html&referral=${ref}`;
+  log("Referral link: "+link); document.getElementById("refLink").textContent=link;
 });
 
 document.getElementById("sendTonButton").addEventListener("click",()=>{
-  if(!walletConnected) return log("Connect wallet first.");
+  if(!walletConnected)return log("Connect wallet first.");
+  const to=document.getElementById("to").value.trim();
   const amt=parseFloat(document.getElementById("amount").value)||0;
-  balance-=amt; if(balance<0)balance=0; updateBalance();
-  log(`Sending ${amt} TON (simulated).`);
+  if(!to||amt<=0)return log("Enter valid address and amount.");
+  if(amt>balance)return log("Insufficient balance.");
+  balance-=amt; updateBalance();
+  const b=myChain.addBlock({send:amt,to,time:Date.now()});
+  document.getElementById("latest-hash").textContent=b.hash;
+  log(`Sent ${amt.toFixed(3)} TON to ${to} (simulated). Block added.`);
 });
+
+// Auto-refresh
+setInterval(fetchTonPrice,30000);
+setInterval(displayChain,5000);
+let multiplier=1;
+setInterval(()=>{multiplier=1+Math.min(10,balance/10); updateMultiplier(multiplier);},10000);
+updateBalance(); displayChain();
 </script>
 </body>
 </html>
