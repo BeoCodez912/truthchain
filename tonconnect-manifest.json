@@ -1,5 +1,6 @@
 {
   "name": "TruthChain",
+  "manifestUrl": 'https://beocodez912.github.io/truthchain/tonconnect-manifest.json'
   "description": "Symbolic Blockchain + TON Wallet integration",
   "icon": "https://BeoCodez912.github.io/truthchain/icon.png",
   "homepage_url": "https://BeoCodez912.github.io/truthchain/",
@@ -12,3 +13,4 @@
   "ton_network": "mainnet",
   "version": "1.0.0"
 }
+
