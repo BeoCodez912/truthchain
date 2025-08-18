@@ -60,12 +60,15 @@ pre{background:var(--panel);padding:10px;border-radius:8px;max-height:420px;over
   <label style="margin-top:8px;display:block">Referral Name</label>
   <input id="refInput" placeholder="Enter referral" />
   <div>Referral Link: <span id="refLink" class="pill">—</span></div>
+  <div>Referral Bonus Accumulated: <span id="refBonus" class="pill">0</span> TON</div>
+  <div style="margin-top:8px"><b>All Referral Bonuses:</b></div>
+  <pre id="refList" style="max-height:120px;overflow:auto;background:#0c0c0c;padding:6px;border-radius:6px;"></pre>
 </div>
 
 <div class="card">
   <div><b>Latest Hash:</b> <span id="latest-hash"></span></div>
   <div><b>Difficulty:</b> <span id="diff"></span></div>
-  <div style="margin-top:8px"><b>Chain (view only)</b></div>
+  <div style="margin-top:8px"><b>Chain (view)</b></div>
   <pre id="output"></pre>
   <div style="margin-top:8px"><b>Mining Value:</b> <span id="miningVal">0</span> TON</div>
 </div>
@@ -91,7 +94,7 @@ const label=[Immortality.join(","),one.join(","),Jesus.join(",")];
 const train=[latent.join(","),one[1],Time.join(",")];
 const test=["ß",((Number(e[1])||0)*(Number(n[1])||0)*(Number(G[6])||0)/(Number(one[1])||1))];
 
-/* ===== BLOCK + BLOCKCHAIN (unfrozen) ===== */
+/* ===== BLOCK + BLOCKCHAIN (Unfrozen chain) ===== */
 class Block{
   constructor(index,timestamp,data,previousHash=''){
     this.index=index;
@@ -101,9 +104,7 @@ class Block{
     this.nonce=0;
     this.hash=this.calculateHash();
   }
-  calculateHash(){
-    return CryptoJS.SHA256(this.index+this.timestamp+JSON.stringify(this.data)+this.previousHash+this.nonce).toString();
-  }
+  calculateHash(){ return CryptoJS.SHA256(this.index+this.timestamp+JSON.stringify(this.data)+this.previousHash+this.nonce).toString(); }
 }
 
 class Blockchain{
@@ -113,7 +114,7 @@ class Blockchain{
     this.#difficulty=Number(difficulty);
   }
   createGenesisBlock(){ return new Block(0,new Date().toISOString(),{genesis:true},'0'.repeat(64)); }
-  get chain(){ return [...this.#chain]; } // unfrozen
+  get chain(){ return [...this.#chain]; } // unfrozen view
   get latest(){ return this.#chain[this.#chain.length-1]; }
   get difficulty(){ return this.#difficulty; }
   addBlock(data){
@@ -121,13 +122,9 @@ class Blockchain{
     const index=this.#chain.length;
     const timestamp=new Date().toISOString();
     let nonce=0, hash='', prefix='0'.repeat(this.#difficulty);
-    do{
-      hash=CryptoJS.SHA256(index+timestamp+JSON.stringify(data)+previousHash+nonce).toString();
-      nonce++;
-    } while(!hash.startsWith(prefix));
+    do{ hash=CryptoJS.SHA256(index+timestamp+JSON.stringify(data)+previousHash+nonce).toString(); nonce++; } while(!hash.startsWith(prefix));
     const b=new Block(index,timestamp,data,previousHash);
-    b.hash=hash;
-    b.nonce=nonce;
+    b.hash=hash; b.nonce=nonce;
     this.#chain.push(b);
     return b;
   }
@@ -149,13 +146,44 @@ const latestHashEl=document.getElementById('latest-hash');
 const diffEl=document.getElementById('diff');
 const miningValEl=document.getElementById('miningVal');
 const refLinkEl=document.getElementById('refLink');
+const refBonusEl=document.getElementById('refBonus');
 
 let miningValue=0;
 let multiplier=1;
 
+/* ===== REFERRAL SYSTEM ===== */
+let referrer = null;
+const referralBalances = {};
+const urlParams = new URLSearchParams(window.location.search);
+if(urlParams.has('referral')){
+  referrer = urlParams.get('referral');
+  console.log('Referral detected:', referrer);
+}
+function updateReferral(){ 
+  const refInput=document.getElementById('refInput').value.trim(); 
+  refLinkEl.textContent=`https://earnfromplay.blogspot.com/2025/08/ton-kid-jon.html&referral=${refInput}`; 
+  referrer=refInput; 
+}
+document.getElementById('refInput').addEventListener('input',updateReferral);
+function applyReferralBonus(amount){
+  if(referrer){
+    const bonus = amount*0.05;
+    if(!referralBalances[referrer]) referralBalances[referrer]=0;
+    referralBalances[referrer]+=bonus;
+  }
+}
+function renderReferralList(){
+  const listEl=document.getElementById('refList');
+  const entries = Object.entries(referralBalances).map(([r,b])=>`${r}: ${b.toFixed(3)} TON`);
+  listEl.textContent = entries.length>0 ? entries.join('\n') : 'No referral bonuses yet';
+}
+
+/* ===== UTILS ===== */
+const toNano=ton=>{ const n=Number(ton); if(!Number.isFinite(n)||n<0)return null; return BigInt(Math.round(n*1e9)); }
+
 async function refreshAddress(){
   const w=await tonConnectUI.getWallet();
-  if(w && w.account && w.account.address){
+  if(w&&w.account&&w.account.address){
     addrEl.textContent=w.account.address;
     sendBtn.disabled=false;
     addBlockBtn.disabled=false;
@@ -175,30 +203,25 @@ tonConnectUI.onStatusChange(refreshAddress);
 refreshAddress();
 
 diffEl.textContent=String(blockchain.difficulty);
-function render(){
-  latestHashEl.textContent=blockchain.latest.hash;
-  out.textContent=JSON.stringify(blockchain.chain,null,2);
-  miningValEl.textContent=miningValue.toFixed(3);
-}
 
-/* ===== UTILS ===== */
-const toNano=ton=>{ const n=Number(ton); if(!Number.isFinite(n)||n<0)return null; return BigInt(Math.round(n*1e9)); }
-
-function updateReferral(){
-  const refInput=document.getElementById('refInput').value.trim();
-  refLinkEl.textContent=`https://earnfromplay.blogspot.com/2025/08/ton-kid-jon.html&referral=${refInput}`;
+function render(){ 
+  latestHashEl.textContent=blockchain.latest.hash; 
+  out.textContent=JSON.stringify(blockchain.chain,null,2); 
+  miningValEl.textContent=miningValue.toFixed(3); 
+  refBonusEl.textContent=referrer && referralBalances[referrer]?referralBalances[referrer].toFixed(3):0;
+  renderReferralList();
 }
-document.getElementById('refInput').addEventListener('input',updateReferral);
 
 /* ===== BUTTON LOGIC ===== */
-addBlockBtn.addEventListener('click', async ()=>{
+addBlockBtn.addEventListener('click',async ()=>{
   const wallet=await refreshAddress();
   blockchain.addBlock({type:'note',tx:'User Block (no transfer)',wallet,arrays:{e,u,G,n,x,one,Matter,Time,Immortality,Jesus,latent,feature,student,teacher,label,train,test}});
   miningValue+=0.01*multiplier;
+  applyReferralBonus(0.01*multiplier);
   render();
 });
 
-sendBtn.addEventListener('click', async ()=>{
+sendBtn.addEventListener('click',async ()=>{
   const to=document.getElementById('to').value.trim();
   const amountTON=document.getElementById('amount').value.trim();
   const nano=toNano(amountTON);
@@ -211,6 +234,7 @@ sendBtn.addEventListener('click', async ()=>{
     const result=await tonConnectUI.sendTransaction(tx);
     blockchain.addBlock({type:'transfer',to,amountTON:Number(amountTON),amountNano:nano.toString(),from:fromAddr,walletEnv:'MAINNET',result});
     miningValue+=0.02*multiplier;
+    applyReferralBonus(0.02*multiplier);
     render();
     alert('Transaction sent & block recorded.');
   }catch(err){
@@ -220,7 +244,7 @@ sendBtn.addEventListener('click', async ()=>{
   }
 });
 
-withdrawBtn.addEventListener('click', async ()=>{
+withdrawBtn.addEventListener('click',async ()=>{
   const walletAddr=await refreshAddress();
   const to=document.getElementById('withdrawTo').value.trim();
   if(!walletAddr){ alert('Connect wallet first.'); return; }
@@ -240,7 +264,7 @@ withdrawBtn.addEventListener('click', async ()=>{
   }
 });
 
-depositBtn.addEventListener('click', ()=>{
+depositBtn.addEventListener('click',()=>{
   const val=Number(document.getElementById('depositInput').value.trim());
   if(!Number.isFinite(val)||val<=0){ alert('Enter valid symbolic deposit'); return; }
   multiplier+=val/10;
