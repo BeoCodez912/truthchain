@@ -6,21 +6,20 @@
 <title>TruthChain: Symbolic Blockchain + TON Wallet</title>
 <style>
   :root{ --bg:#111; --fg:#0f0; --muted:#8f8; --panel:#000; }
-  body { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: var(--bg); color: var(--fg); padding: 20px; }
-  .row{ display:grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items:start; }
-  .card{ background: var(--panel); border-radius: 10px; padding: 12px; }
-  button { background: var(--fg); color: var(--bg); border: none; padding: 8px 16px; margin: 6px 0; cursor: pointer; border-radius: 6px; font-weight:700 }
+  body { font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--bg); color: var(--fg); padding: 20px; }
+  .row{ display:grid; grid-template-columns: 1fr 1fr; gap:16px; align-items:start; }
+  .card{ background: var(--panel); border-radius:10px; padding:12px; }
+  button { background: var(--fg); color: var(--bg); border:none; padding:8px 16px; margin:6px 0; cursor:pointer; border-radius:6px; font-weight:700; }
   button:disabled { opacity:0.5; cursor:not-allowed; }
-  input { width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid #1f1f1f; background:#0c0c0c; color:var(--fg) }
-  label{ color: var(--muted); font-size: 12px; }
-  pre { background: var(--panel); padding: 10px; border-radius: 8px; max-height: 420px; overflow: auto; }
-  .pill{ display:inline-block; padding:2px 8px; border:1px solid #1f1f1f; border-radius:999px; background:#0c0c0c }
+  input { width:100%; padding:8px 10px; border-radius:6px; border:1px solid #1f1f1f; background:#0c0c0c; color:var(--fg); }
+  label{ color: var(--muted); font-size:12px; }
+  pre { background: var(--panel); padding:10px; border-radius:8px; max-height:420px; overflow:auto; }
+  .pill{ display:inline-block; padding:2px 8px; border:1px solid #1f1f1f; border-radius:999px; background:#0c0c0c; }
 </style>
 <script src="https://unpkg.com/crypto-js@4.2.0/crypto-js.js"></script>
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 </head>
 <body>
-
 <h2>TruthChain: Symbolic Blockchain + TON Wallet</h2>
 <div class="row">
   <div class="card">
@@ -39,15 +38,15 @@
   <div class="card">
     <div><b>Latest Hash:</b> <span id="latest-hash"></span></div>
     <div><b>Difficulty:</b> <span id="diff"></span></div>
-    <div style="margin-top:8px"><b>Chain (frozen view)</b></div>
+    <div style="margin-top:8px"><b>Chain (live view)</b></div>
     <pre id="output"></pre>
   </div>
 </div>
 
 <script>
   // ===== SYMBOLIC ARRAYS =====
-  const e = ["euGene", 5, 6, "HEI", "EG\uD83C\uDDFA\uD83C\uDDF8"];
-  const u = ["VAV", "WAW", 6, e];
+  const e = ["euGene",5,6,"HEI","EG\uD83C\uDDFA\uD83C\uDDF8"];
+  const u = ["VAV","WAW",6,e];
   const G = ["AC\uD83C\uDDFA\uD83C\uDDF8","BA\uD83C\uDDFA\uD83C\uDDF8","GB\uD83C\uDDFA\uD83C\uDDF8","CE\uD83C\uDDFA\uD83C\uDDF8","YAHWEH","Gimel",3,"https://unpkg.com/@tonconnect/sdk@0.0.34/dist/tonconnect-sdk.min.js"];
   const n = ["nun",50,"\u2620\uFE0F"];
   const x = [(Number(u[2])||0)*111.1,(Number(e[1])||0)*133.2,(Number(e[2])||0)*111.1,(Number(G[6])||0)*222];
@@ -62,53 +61,41 @@
   const teacher = [Immortality.join(","),one.join(","),student];
   const label = [Immortality.join(","),one.join(","),Jesus.join(",")];
   const train = [latent.join(","),one[1],Time.join(",")];
-  const test = ["ß",((Number(e[1])||0)*(Number(n[1])||0)*(Number(G[6])||0)/(Number(one[1])||1))];
+  const test = ["ß", ((Number(e[1])||0)*(Number(n[1])||0)*(Number(G[6])||0)/(Number(one[1])||1))];
 
-  // ===== BLOCK + BLOCKCHAIN =====
+  // ===== BLOCK + BLOCKCHAIN (unfrozen) =====
   class Block {
     constructor(index,timestamp,data,previousHash=''){
-      let nonce=0;
-      let hash=this.calculateHash(index,timestamp,data,previousHash,nonce);
-      Object.defineProperties(this,{
-        index:{value:index,enumerable:true},
-        timestamp:{value:timestamp,enumerable:true},
-        data:{value:Object.freeze(data),enumerable:true},
-        previousHash:{value:previousHash,enumerable:true},
-        nonce:{value:nonce,writable:true,enumerable:true},
-        hash:{value:hash,writable:true,enumerable:true}
-      });
-      Object.freeze(this); // block itself immutable
+      this.index=index;
+      this.timestamp=timestamp;
+      this.data=data;
+      this.previousHash=previousHash;
+      this.nonce=0;
+      this.hash=this.calculateHash();
     }
-    calculateHash(index,timestamp,data,previousHash,nonce){
-      return CryptoJS.SHA256(index+timestamp+JSON.stringify(data)+previousHash+nonce).toString();
+    calculateHash(){
+      return CryptoJS.SHA256(this.index+this.timestamp+JSON.stringify(this.data)+this.previousHash+this.nonce).toString();
     }
   }
 
   class Blockchain {
-    #chain;
-    #difficulty;
     constructor(difficulty=3){
-      this.#chain=[this.createGenesisBlock()];
-      this.#difficulty=Number(difficulty);
+      this.chain=[this.createGenesisBlock()];
+      this.difficulty=Number(difficulty);
     }
     createGenesisBlock(){ return new Block(0,new Date().toISOString(),{genesis:true},'0'.repeat(64)); }
-    get chain(){ return this.#chain; } // return live mutable array
-    get latest(){ return this.#chain[this.#chain.length-1]; }
-    get difficulty(){ return this.#difficulty; }
+    get latest(){ return this.chain[this.chain.length-1]; }
     addBlock(data){
       const previousHash=this.latest.hash;
-      const index=this.#chain.length;
+      const index=this.chain.length;
       const timestamp=new Date().toISOString();
       let nonce=0,hash='';
-      const prefix='0'.repeat(this.#difficulty);
-      do{
-        hash=CryptoJS.SHA256(index+timestamp+JSON.stringify(data)+previousHash+nonce).toString();
-        nonce++;
-      }while(!hash.startsWith(prefix));
-      const b=new Block(index,timestamp,data,previousHash);
-      b.hash=hash; b.nonce=nonce;
-      this.#chain.push(b);
-      return b;
+      const prefix='0'.repeat(this.difficulty);
+      do{ hash=CryptoJS.SHA256(index+timestamp+JSON.stringify(data)+previousHash+nonce).toString(); nonce++; }while(!hash.startsWith(prefix));
+      const block=new Block(index,timestamp,data,previousHash);
+      block.hash=hash; block.nonce=nonce;
+      this.chain.push(block);
+      return block;
     }
   }
 
@@ -116,11 +103,7 @@
 
   // ===== TON CONNECT =====
   const manifestUrl='https://BeoCodez912.github.io/truthchain/tonconnect-manifest.json';
-  const tonConnectUI=new TON_CONNECT_UI.TonConnectUI({
-    manifestUrl,
-    buttonRootId:'ton-connect',
-    network:'MAINNET'
-  });
+  const tonConnectUI=new TON_CONNECT_UI.TonConnectUI({manifestUrl, buttonRootId:'ton-connect', network:'MAINNET'});
 
   const addrEl=document.getElementById('addr');
   const sendBtn=document.getElementById('sendBtn');
@@ -155,20 +138,18 @@
 
   const toNano=ton=>{
     const n=Number(ton);
-    if(!Number.isFinite(n)||n<0) return null;
+    if(!Number.isFinite(n)||n<0)return null;
     return BigInt(Math.round(n*1e9));
   };
 
-  addBlockBtn.addEventListener('click',async()=>{
-    console.log('Add Block clicked');
+  addBlockBtn.addEventListener('click', async ()=>{
     const wallet=await refreshAddress();
     const data={type:'note',tx:'User Block (no transfer)',wallet,arrays:{e,u,G,n,x,one,Matter,Time,Immortality,Jesus,latent,feature,student,teacher,label,train,test}};
     blockchain.addBlock(data);
     render();
   });
 
-  sendBtn.addEventListener('click',async()=>{
-    console.log('Send TON clicked');
+  sendBtn.addEventListener('click', async ()=>{
     const to=document.getElementById('to').value.trim();
     const amountTON=document.getElementById('amount').value.trim();
     const nano=toNano(amountTON);
@@ -177,7 +158,7 @@
     if(!to){ alert('Enter recipient address.'); return; }
     if(nano===null){ alert('Enter valid TON amount.'); return; }
 
-    const tx={validUntil:Math.floor(Date.now()/1000)+300,messages:[{address:to,amount:nano.toString()}]};
+    const tx={validUntil:Math.floor(Date.now()/1000)+300, messages:[{address:to, amount:nano.toString()}]};
     try{
       const result=await tonConnectUI.sendTransaction(tx);
       const data={type:'transfer',to,amountTON:Number(amountTON),amountNano:nano.toString(),from:fromAddr,walletEnv:'MAINNET',result};
