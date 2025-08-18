@@ -144,7 +144,7 @@ const balanceEl=document.getElementById("wallet-balance");
 
 // TON Connect integration
 const tonConnect = new TonConnectUI({
-  manifestUrl:'https://beocodez912.github.io/truthchain/tonconnect-manifest.json'
+  manifestUrl: 'https://beocodez912.github.io/truthchain/tonconnect-manifest.json'
 });
 tonConnect.renderButton(document.getElementById("ton-connect"));
 tonConnect.onStatusChange((wallet)=>{
@@ -252,3 +252,4 @@ updateBalance(); displayChain();
 </script>
 </body>
 </html>
+
