@@ -1,11 +1,14 @@
 {
   "name": "TruthChain",
-  "url": "https://raw.githubusercontent.com/BeoCodez912/truthchain/main/tonconnect-manifest.json",
-  "iconUrl": "https://cdn3d.iconscout.com/3d/premium/thumb/toncoin-10861020-8727418.png",
-  "description": "Blockchain + TON Wallet dApp",
-  "termsOfUseUrl": "#",
-  "privacyPolicyUrl": "#"
+  "description": "Symbolic Blockchain + TON Wallet integration",
+  "icon": "https://BeoCodez912.github.io/truthchain/icon.png",
+  "homepage_url": "https://BeoCodez912.github.io/truthchain/",
+  "developer_name": "BeoCodez912",
+  "developer_url": "https://BeoCodez912.github.io/",
+  "permissions": [
+    "TON://TRANSFER",
+    "TON://SIGN"
+  ],
+  "ton_network": "mainnet",
+  "version": "1.0.0"
 }
-
-
-
