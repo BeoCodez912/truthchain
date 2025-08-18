@@ -1,412 +1,200 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>TruthChain — Symbolic Blockchain + TON</title>
-  <style>
-    :root{--bg:#060606;--fg:#0f0;--muted:#8f8;--panel:#0b0b0b}
-    body{background:var(--bg);color:var(--fg);font-family:ui-monospace,Menlo,Consolas,monospace;padding:18px}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-    .card{background:var(--panel);padding:12px;border-radius:10px}
-    button{background:var(--fg);color:var(--bg);border:none;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:700}
-    button:disabled{opacity:.45;cursor:not-allowed}
-    input{width:100%;padding:8px;border-radius:6px;border:1px solid #1f1f1f;background:#050505;color:var(--fg)}
-    pre{background:#050505;padding:10px;border-radius:8px;max-height:420px;overflow:auto}
-    .pill{display:inline-block;padding:2px 8px;border-radius:999px;background:#070707;border:1px solid #111}
-  </style>
-
-  <!-- CryptoJS for hashing and TonConnect UI -->
-  <script src="https://unpkg.com/crypto-js@4.2.0/crypto-js.js"></script>
-  <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>TruthChain — Symbolic Blockchain + Live TON</title>
+<style>
+:root{--bg:#060606;--fg:#0f0;--muted:#8f8;--panel:#0b0b0b}
+body{background:var(--bg);color:var(--fg);font-family:ui-monospace,Menlo,Consolas,monospace;padding:18px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.card{background:var(--panel);padding:12px;border-radius:10px}
+button{background:var(--fg);color:var(--bg);border:none;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:700}
+button:disabled{opacity:.45;cursor:not-allowed}
+input{width:100%;padding:8px;border-radius:6px;border:1px solid #1f1f1f;background:#050505;color:var(--fg)}
+pre{background:#050505;padding:10px;border-radius:8px;max-height:420px;overflow:auto}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;background:#070707;border:1px solid #111}
+</style>
+<script src="https://unpkg.com/crypto-js@4.2.0/crypto-js.js"></script>
+<script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 </head>
 <body>
-  <h2>TruthChain — Symbolic Blockchain + TON Wallet</h2>
+<h2>TruthChain — Symbolic Blockchain + Live TON Wallet</h2>
 
-  <div class="row">
-    <div class="card">
-      <div id="ton-connect"></div>
-      <div>Address: <span id="addr" class="pill">—</span></div>
+<div class="row">
+<div class="card">
+  <div id="ton-connect"></div>
+  <div>Address: <span id="addr" class="pill">—</span></div>
+  <div id="wallet-balance">Balance: 0 TON ($0)</div>
+  <div id="ton-price">Fetching TON price...</div>
 
-      <hr/>
-
-      <label>Recipient Address</label>
-      <input id="to" placeholder="e.g. UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" />
-      <label style="display:block;margin-top:8px">Amount (TON)</label>
-      <input id="amount" placeholder="e.g. 0.25" />
-      <div style="margin-top:8px">
-        <button id="sendBtn" disabled>Send TON & Record Block</button>
-        <button id="addBlockBtn" disabled>Add Block (no transfer)</button>
-      </div>
-
-      <hr/>
-
-      <label style="display:block">Withdraw To</label>
-      <input id="withdrawTo" placeholder="e.g. UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" />
-      <div style="margin-top:8px">
-        <button id="withdrawBtn" disabled>Withdraw Mining Value</button>
-      </div>
-
-      <hr/>
-
-      <label style="display:block">Symbolic Deposit (multiplier)</label>
-      <input id="depositInput" placeholder="Enter amount (symbolic)" />
-      <div style="margin-top:8px">
-        <button id="depositBtn" disabled>Deposit Symbolic</button>
-      </div>
-
-      <hr/>
-
-      <label style="display:block">Referral Name</label>
-      <input id="refInput" placeholder="Enter referral name" />
-      <div style="margin-top:8px">Referral: <span id="refLink" class="pill">—</span></div>
-      <div style="margin-top:6px">Referral Bonus: <span id="refBonus" class="pill">0</span> TON</div>
-      <pre id="refList" style="margin-top:8px;max-height:120px;overflow:auto;"></pre>
-    </div>
-
-    <div class="card">
-      <div><b>Latest Hash:</b> <span id="latest-hash">—</span></div>
-      <div><b>Difficulty:</b> <span id="diff">—</span></div>
-      <div style="margin-top:8px"><b>Chain (view)</b></div>
-      <pre id="output">[]</pre>
-      <div style="margin-top:8px"><b>Mining Value:</b> <span id="miningVal">0.000</span> TON</div>
-      <div style="margin-top:12px">
-        <label>Multiplier</label>
-        <div style="background:#000;padding:4px;border-radius:6px;margin-top:6px">
-          <div id="multBar" style="height:22px;background:#0a0;border-radius:6px;width:5%;text-align:center;color:#000;font-weight:700">x1</div>
-        </div>
-      </div>
-    </div>
+  <hr/>
+  <label>Recipient Address</label>
+  <input id="to" placeholder="e.g. UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"/>
+  <label style="display:block;margin-top:8px">Amount (TON)</label>
+  <input id="amount" placeholder="e.g. 0.25"/>
+  <div style="margin-top:8px">
+    <button id="sendTonButton" disabled>Send TON & Record Block</button>
+    <button id="mineButton" disabled>Add Block (no transfer)</button>
   </div>
 
+  <hr/>
+  <label style="display:block">Withdraw To</label>
+  <input id="withdrawTo" placeholder="e.g. UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"/>
+  <div style="margin-top:8px">
+    <button id="withdrawButton" disabled>Withdraw Mining Value</button>
+  </div>
+
+  <hr/>
+  <label style="display:block">Symbolic Deposit (multiplier)</label>
+  <input id="depositInput" placeholder="Enter amount (symbolic)"/>
+  <div style="margin-top:8px">
+    <button id="depositButton" disabled>Deposit Symbolic</button>
+  </div>
+
+  <hr/>
+  <label style="display:block">Referral Name</label>
+  <input id="refInput" placeholder="Enter referral name"/>
+  <div style="margin-top:8px">
+    <button id="referralButton" disabled>Generate Referral</button>
+  </div>
+  <div style="margin-top:8px">Referral: <span id="refLink" class="pill">—</span></div>
+  <div style="margin-top:6px">Referral Bonus: <span id="refBonus" class="pill">0</span> TON</div>
+  <pre id="refList" style="margin-top:8px;max-height:120px;overflow:auto;"></pre>
+</div>
+
+<div class="card">
+  <div><b>Latest Hash:</b> <span id="latest-hash">—</span></div>
+  <div><b>Difficulty:</b> <span id="diff">3</span></div>
+  <div style="margin-top:8px"><b>Chain (view)</b></div>
+  <div style="margin-top:8px"><b>Mining Value:</b> <span id="miningVal">0.000</span> TON</div>
+  <div style="margin-top:12px">
+    <label>Multiplier</label>
+    <div style="background:#000;padding:4px;border-radius:6px;margin-top:6px">
+      <div id="multBar" style="height:22px;background:#0a0;border-radius:6px;width:5%;text-align:center;color:#000;font-weight:700">x1</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<pre id="log"></pre>
+
 <script>
-/* ================= SYMBOLIC ARRAYS (from your first messages) ================= */
-const e = ["euGene", 5, 6, "HEI", "EG\uD83C\uDDFA\uD83C\uDDF8"];
-const u = ["VAV", "WAW", 6, e];
-const G = ["AC\uD83C\uDDFA\uD83C\uDDF8", "BA\uD83C\uDDFA\uD83C\uDDF8", "GB\uD83C\uDDFA\uD83C\uDDF8", "CE\uD83C\uDDFA\uD83C\uDDF8", "YAHWEH", "Gimel", 3, "https://unpkg.com/@tonconnect/sdk@0.0.34/dist/tonconnect-sdk.min.js"];
-const n = ["nun", 50, "\u2620\uFE0F"];
-const x = [
-  (Number(u[2]) || 0) * 111.1,
-  (Number(e[1]) || 0) * 133.2,
-  (Number(e[2]) || 0) * 111.1,
-  (Number(G[6]) || 0) * 222
-];
-const one = ["\u2020", 555.5, G[4], G[7], n[0]];
-const Matter = 164;
-const Time = [Date.now(), "∞"];
-const Immortality = [G[4], Matter];
-const Jesus = [one.join(","), Immortality.join(","), n[0]];
-const latent = [Immortality.join(","), one.join(","), Matter];
-const feature = [Jesus, one[0], n[0]];
-const student = [Matter, G[7]];
-const teacher = [Immortality.join(","), one.join(","), student];
-const label = [Immortality.join(","), one.join(","), Jesus.join(",")];
-const train = [latent.join(","), one[1], Time.join(",")];
-const test = ["ß", ((Number(e[1]) || 0) * (Number(n[1]) || 0) * (Number(G[6]) || 0) / (Number(one[1]) || 1))];
-
-/* ================= PRIVATE CONTEXT (kept accessible for computations) ================= */
-class AppContext {
-  constructor(Name, Hope, Friend) {
-    this.Name = Name;
-    this.Hope = Hope;
-    this.Friend = Friend;
-  }
-  logPrivate() { console.log(this.Name, this.Hope, this.Friend); }
-}
-const ctx = new AppContext('John', 'Light', 'Truth');
-
-/* ================= BLOCK + BLOCKCHAIN (unfrozen chain; difficulty immutable) ================= */
+// Blockchain
 class Block {
-  constructor(index, timestamp, data, previousHash = '') {
-    this.index = index;
-    this.timestamp = timestamp;
-    this.data = data;
-    this.previousHash = previousHash;
-    this.nonce = 0;
-    this.hash = this.calculateHash();
+  constructor(index,timestamp,data,previousHash=''){
+    this.index=index;this.timestamp=timestamp;this.data=data;this.previousHash=previousHash;
+    this.nonce=0;this.hash=this.calculateHash();
   }
-  calculateHash() {
-    return CryptoJS.SHA256(this.index + this.timestamp + JSON.stringify(this.data) + this.previousHash + this.nonce).toString();
+  calculateHash(){
+    return CryptoJS.SHA256(this.index+this.timestamp+JSON.stringify(this.data)+this.previousHash+this.nonce).toString();
   }
 }
 
 class Blockchain {
-  #chain;
-  #difficulty;
-  constructor(difficulty = 3) {
-    this.#chain = [this.createGenesisBlock()];
-    this.#difficulty = Number(difficulty);
+  #chain; #difficulty;
+  constructor(difficulty=3){
+    this.#chain=[this.createGenesisBlock()]; this.#difficulty=difficulty;
   }
-  createGenesisBlock() { return new Block(0, new Date().toISOString(), { genesis: true }, '0'.repeat(64)); }
-  get chain() { return [...this.#chain]; }           // unfrozen copy on access
-  get latest() { return this.#chain[this.#chain.length - 1]; }
-  get difficulty() { return this.#difficulty; }     // immutable (no setter)
-  addBlock(data) {
-    const previousHash = this.latest.hash;
-    const index = this.#chain.length;
-    const timestamp = new Date().toISOString();
-    let nonce = 0, hash = '';
-    const prefix = '0'.repeat(this.#difficulty);
-    do {
-      hash = CryptoJS.SHA256(index + timestamp + JSON.stringify(data) + previousHash + nonce).toString();
-      nonce++;
-    } while (!hash.startsWith(prefix));
-    const b = new Block(index, timestamp, data, previousHash);
-    b.hash = hash; b.nonce = nonce;
-    this.#chain.push(b);
-    return b;
+  createGenesisBlock(){ return new Block(0,new Date().toISOString(),{genesis:true},'0'.repeat(64)); }
+  get chain(){ return [...this.#chain]; }
+  get latest(){ return this.#chain[this.#chain.length-1]; }
+  addBlock(data){
+    const previousHash=this.latest.hash;
+    const index=this.#chain.length;
+    const timestamp=new Date().toISOString();
+    let nonce=0, hash='', prefix='0'.repeat(this.#difficulty);
+    do{ hash=CryptoJS.SHA256(index+timestamp+JSON.stringify(data)+previousHash+nonce).toString(); nonce++; }
+    while(!hash.startsWith(prefix));
+    const b=new Block(index,timestamp,data,previousHash); b.hash=hash; b.nonce=nonce;
+    this.#chain.push(b); return b;
   }
 }
+const myChain=new Blockchain();
 
-const blockchain = new Blockchain(3);
+// unknownTruth chain
+const e=["euGene",5,6,"HEI","EG🎹"];
+const u=["VAV","WAW",6,e];
+const G=["AC🎹","BA🎹","GB🎹","CE🎹","YAHWEH","Gimel",3,"https://unpkg.com/@tonconnect/sdk@0.0.34/dist/tonconnect-sdk.min.js"];
+const n=["nun",50,"💧"];
+const x=[(u[2]*111.1),111.1,(e[1]*133.2),(e[2]*111.1),133.2,(G[6]*222)];
+const one=["†",555.5,G[4],G[7],n[0]];
+const Time=[Date.now(),"eternal",Block,Blockchain]; 
+const Matter=164;
+const Immortality=[G[4],"unknownTruth",Matter];
+const Jesus=[one.join(","),Immortality.join(","),n[0]];
+const Phi=[1.3149/555.5/(x[0]||1)/(G[6]||1)];
+const latent=[(Matter*7),"teacher"];
+const feature=[(555.5*50),"label"];
+const student=[Matter,G[7]];
+const test=["ß",(5*50*222/(Phi[0]||1))];
+const teacher=[Immortality.join(","),one.join(","),student];
+const label=[Immortality.join(","),one.join(","),Jesus.join(",")];
+const unknown_Truth_chain=[Phi,"†",x.join(","),one.join(","),Immortality.join(","),Jesus.join(","),Time.join(",")];
+console.log("unknown_Truth_chain:",unknown_Truth_chain);
+console.log("train/latent/feature:",latent,feature,teacher,student,test,label);
 
-/* ================= TON CONNECT UI (MAINNET) ================= */
-const tonManifestUrl = 'https://BeoCodez912.github.io/truthchain/tonconnect-manifest.json'; // or replace with your hosted manifest
-const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-  manifestUrl: tonManifestUrl,
-  buttonRootId: 'ton-connect',
-  network: 'MAINNET'
+// Wallet + live TON
+const log=(msg)=>document.getElementById("log").textContent+=msg+"\n";
+let walletConnected=false;
+let balance=0;
+const balanceEl=document.getElementById("wallet-balance");
+
+// simulate auto-connect
+walletConnected=true;
+document.querySelectorAll("button").forEach(btn=>btn.disabled=false);
+log("Wallet connected (simulated).");
+
+// Fetch live TON price
+let tonPriceUSD=0;
+async function fetchTonPrice(){
+  try{
+    const res=await fetch("https://tonapi.io/v1/rates?tokens=ton&currencies=usd");
+    const json=await res.json();
+    tonPriceUSD=json.rates.ton.prices.USD;
+    document.getElementById("ton-price").textContent=`1 TON ≈ $${tonPriceUSD.toFixed(2)} USD`;
+    updateBalance();
+  }catch(err){
+    document.getElementById("ton-price").textContent="⚠️ TON price unavailable";
+  }
+}
+function updateBalance(){
+  const usd=(balance*tonPriceUSD).toFixed(2);
+  balanceEl.textContent=`Balance: ${balance.toFixed(3)} TON ($${usd})`;
+}
+fetchTonPrice();
+
+// Buttons
+document.getElementById("mineButton").addEventListener("click",()=>{
+  if(!walletConnected) return log("Connect wallet first.");
+  const b=myChain.addBlock({reward:1,time:Date.now()});
+  balance+=1; updateBalance();
+  document.getElementById("latest-hash").textContent=b.hash;
+  log("Mined: "+JSON.stringify(b,null,2));
 });
 
-/* ================= UI elements and state ================= */
-const addrEl = document.getElementById('addr');
-const sendBtn = document.getElementById('sendBtn');
-const addBlockBtn = document.getElementById('addBlockBtn');
-const withdrawBtn = document.getElementById('withdrawBtn');
-const depositBtn = document.getElementById('depositBtn');
-const out = document.getElementById('output');
-const latestHashEl = document.getElementById('latest-hash');
-const diffEl = document.getElementById('diff');
-const miningValEl = document.getElementById('miningVal');
-const refLinkEl = document.getElementById('refLink');
-const refBonusEl = document.getElementById('refBonus');
-const refListEl = document.getElementById('refList');
-const multBar = document.getElementById('multBar');
-
-let miningValue = 0;
-let multiplier = 1;
-let referralBonuses = [];
-diffEl.textContent = String(blockchain.difficulty);
-
-/* ================= UTILS ================= */
-const toNano = ton => {
-  const n = Number(ton);
-  if (!Number.isFinite(n) || n < 0) return null;
-  return BigInt(Math.round(n * 1e9));
-};
-
-function safeNumber(v) { return Number(v) || 0; }
-
-/* ================= Functions requested in "first response" ================= */
-/* computePhi: safe numeric calculation based on numeric elements in arrays */
-function computePhi() {
-  // use numeric safe values: one[1] and x[0] and G[6]
-  const denom = (safeNumber(one[1]) || 1) * (safeNumber(x[0]) || 1) * (safeNumber(G[6]) || 1);
-  return 1.3149 / denom;
-}
-
-/* create an "unknown_Truth_chain" array (safe - no recursion) */
-function createUnknownTruthChain() {
-  const phi = computePhi();
-  const t = [
-    "†",
-    G[4],
-    n[0],
-    one.join(','),
-    Immortality.join(','),
-    phi,
-    ...x,
-    ...Time,
-    Matter,
-    latent.join(','),
-    feature.join(','),
-  ];
-  return t;
-}
-
-/* create unknownTruthTrain (a symbolic composition) */
-function createUnknownTruthTrain() {
-  // Combine some symbolic data into a train signature string
-  const utc = createUnknownTruthChain().slice(0, 6).join('|');
-  return `${utc}::${latent.join('|')}::${one[1]}`;
-}
-
-/* compute the "test" expression safely */
-function computeTest() {
-  const numerator = safeNumber(e[1]) * safeNumber(n[1]) * safeNumber(G[6]) * safeNumber(x[0]);
-  const denom = (safeNumber(computePhi()) || 1) * (safeNumber(one[1]) || 1) * (safeNumber(G[6]) || 1);
-  const val = denom === 0 ? 0 : numerator / denom;
-  return ["ß", val];
-}
-
-/* unknownTruth helpers (from earlier merges) */
-function unknownTruth1(input) {
-  return input.map(v => (typeof v === 'number' ? v * 42 : String(v).split('').reverse().join('')));
-}
-function unknownTruth2(arr) {
-  const combined = arr.concat([ctx.Name, ctx.Hope, ctx.Friend]);
-  return combined.filter((v, i, s) => s.indexOf(v) === i);
-}
-function unknownTruth3(chainObj) {
-  return CryptoJS.SHA256(chainObj.chain.map(b => b.hash).join('') + ctx.Hope + ctx.Friend).toString();
-}
-
-/* renderUnknownTruth — logs and returns consolidated results */
-function renderUnknownTruth() {
-  const phi = computePhi();
-  const utc = createUnknownTruthChain();
-  const utt = createUnknownTruthTrain();
-  const tst = computeTest();
-  const t1 = unknownTruth1([...e, ...u]);
-  const t2 = unknownTruth2(t1);
-  const t3 = unknownTruth3(blockchain);
-  console.groupCollapsed("UnknownTruth Snapshot");
-  console.log("Phi:", phi);
-  console.log("unknown_Truth_chain:", utc);
-  console.log("unknown_Truth_train:", utt);
-  console.log("test:", tst);
-  console.log("unknownTruth1:", t1);
-  console.log("unknownTruth2:", t2);
-  console.log("unknownTruth3:", t3);
-  console.groupEnd();
-  return { phi, utc, utt, tst, t1, t2, t3 };
-}
-
-/* ================= RENDER ================= */
-function render() {
-  latestHashEl.textContent = blockchain.latest.hash;
-  out.textContent = JSON.stringify(blockchain.chain, null, 2);
-  miningValEl.textContent = miningValue.toFixed(3);
-  multBar.style.width = Math.min(multiplier * 5, 100) + "%";
-  multBar.textContent = `x${multiplier.toFixed(2)}`;
-  renderUnknownTruth(); // run the first-response functions every render (logs to console)
-}
-
-/* ================= TON wallet + button gating ================= */
-async function refreshAddress() {
-  try {
-    const w = await tonConnectUI.getWallet();
-    if (w && w.account && w.account.address) {
-      addrEl.textContent = w.account.address;
-      [sendBtn, addBlockBtn, withdrawBtn, depositBtn].forEach(b => b.disabled = false);
-      // private logging as you requested
-      ctx.logPrivate();
-      console.log("Wallet connected:", w.account.address);
-      return w.account.address;
-    }
-  } catch (err) {
-    console.error(err);
-  }
-  addrEl.textContent = '—';
-  [sendBtn, addBlockBtn, withdrawBtn, depositBtn].forEach(b => b.disabled = true);
-  return '';
-}
-
-/* helper: wrap event handlers so they require a current wallet connection */
-function withWallet(cb) {
-  return async function (...args) {
-    const wallet = await refreshAddress();
-    if (!wallet) return alert("Connect wallet first.");
-    return cb(wallet, ...args);
-  };
-}
-
-/* ensure the ton-connect UI button renders and the manifest is available */
-tonConnectUI.onStatusChange(refreshAddress);
-refreshAddress();
-
-/* ================= BUTTON LOGIC ================= */
-addBlockBtn.addEventListener('click', withWallet(async (wallet) => {
-  const data = {
-    type: 'note', tx: 'User Block (no transfer)', wallet,
-    arrays: { e, u, G, n, x, one, Matter, Time, Immortality, Jesus, latent, feature, student, teacher, label, train, test }
-  };
-  blockchain.addBlock(data);
-  miningValue += 0.01 * multiplier;
-  render();
-}));
-
-sendBtn.addEventListener('click', withWallet(async (wallet) => {
-  const to = document.getElementById('to').value.trim();
-  const amountTON = document.getElementById('amount').value.trim();
-  const nano = toNano(amountTON);
-  if (!to) { alert('Enter recipient address.'); return; }
-  if (nano === null) { alert('Enter valid TON amount.'); return; }
-  const tx = { validUntil: Math.floor(Date.now() / 1000) + 300, messages: [{ address: to, amount: nano.toString() }] };
-  try {
-    const result = await tonConnectUI.sendTransaction(tx);
-    const data = { type: 'transfer', to, amountTON: Number(amountTON), amountNano: nano.toString(), from: wallet, walletEnv: 'MAINNET', result };
-    blockchain.addBlock(data);
-    miningValue += 0.02 * multiplier;
-    render();
-    alert('Transaction sent & block recorded.');
-  } catch (err) {
-    const data = { type: 'transfer-error', to, amountTON: Number(amountTON), from: wallet, error: String(err) };
-    blockchain.addBlock(data); render();
-    alert('Send failed (recorded in chain).');
-  }
-}));
-
-withdrawBtn.addEventListener('click', withWallet(async (wallet) => {
-  const to = document.getElementById('withdrawTo').value.trim();
-  if (miningValue <= 0) return alert('No mining value to withdraw.');
-  if (!to) return alert('Enter recipient address for withdrawal.');
-  const nano = toNano(miningValue);
-  const tx = { validUntil: Math.floor(Date.now() / 1000) + 300, messages: [{ address: to, amount: nano.toString() }] };
-  try {
-    const result = await tonConnectUI.sendTransaction(tx);
-    blockchain.addBlock({ type: 'withdraw', amount: miningValue, amountNano: nano.toString(), from: wallet, to, result });
-    alert(`Withdrawn ${miningValue.toFixed(3)} TON to ${to} & recorded in chain.`);
-    miningValue = 0; render();
-  } catch (err) {
-    blockchain.addBlock({ type: 'withdraw-error', amount: miningValue, from: wallet, to, error: String(err) });
-    alert('Withdraw failed (recorded in chain).'); render();
-  }
-}));
-
-depositBtn.addEventListener('click', withWallet(() => {
-  const val = Number(document.getElementById('depositInput').value.trim());
-  if (!Number.isFinite(val) || val <= 0) return alert('Enter valid symbolic deposit');
-  multiplier += val / 10;
-  alert(`Multiplier increased! Current: ${multiplier.toFixed(2)}x`);
-  render();
-}));
-
-/* referral handling */
-document.getElementById('refInput').addEventListener('input', () => {
-  const refInput = document.getElementById('refInput').value.trim();
-  refLinkEl.textContent = `https://earnfromplay.blogspot.com/2025/08/ton-kid-jon.html&referral=${encodeURIComponent(refInput)}`;
+document.getElementById("withdrawButton").addEventListener("click",()=>{
+  if(!walletConnected) return log("Connect wallet first.");
+  log("Withdrawing mining value..."); balance=0; updateBalance();
 });
 
-/* simple referral claim function (symbolic) */
-function claimReferral(referralName, amount = 0.01) {
-  referralBonuses.push({ ref: referralName, amount, time: new Date().toISOString() });
-  refBonusEl.textContent = (referralBonuses.reduce((s, r) => s + r.amount, 0)).toFixed(3);
-  refListEl.textContent = referralBonuses.map(r => `${r.time} · ${r.ref} · ${r.amount} TON`).join('\n');
-}
-
-/* quick demo: clicking referral link will simulate someone claiming */
-refLinkEl.addEventListener('click', () => {
-  const name = document.getElementById('refInput').value.trim() || 'anon';
-  claimReferral(name);
-  alert('Referral simulated (symbolic).');
+document.getElementById("depositButton").addEventListener("click",()=>{
+  if(!walletConnected) return log("Connect wallet first.");
+  log("Symbolic deposit for multiplier applied.");
 });
 
-/* ================= Auto-mining simulation (optional; mild cadence) ================= */
-setInterval(() => {
-  // auto-mine only if wallet connected (keeps it meaningful)
-  tonConnectUI.getWallet().then(w => {
-    if (w && w.account && w.account.address) {
-      const blk = blockchain.addBlock({ auto: true, by: 'auto-miner' });
-      miningValue += 0.005 * multiplier;
-      console.log('Auto-mined block', blk.index);
-      render();
-    }
-  }).catch(() => {});
-}, 7000);
+document.getElementById("referralButton").addEventListener("click",()=>{
+  if(!walletConnected) return log("Connect wallet first.");
+  const referral=`https://earnfromplay.blogspot.com/2025/08/ton-kid-jon.html&referral=USER123`;
+  log("Referral link: "+referral);
+});
 
-/* initial render */
-render();
+document.getElementById("sendTonButton").addEventListener("click",()=>{
+  if(!walletConnected) return log("Connect wallet first.");
+  const amt=parseFloat(document.getElementById("amount").value)||0;
+  balance-=amt; if(balance<0)balance=0; updateBalance();
+  log(`Sending ${amt} TON (simulated).`);
+});
 </script>
 </body>
 </html>
