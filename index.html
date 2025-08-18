@@ -101,7 +101,6 @@ class AppContext {
     this.Hope = Hope;
     this.Friend = Friend;
   }
-
   logPrivate(){
     console.log(this.Name, this.Hope, this.Friend);
   }
@@ -168,7 +167,6 @@ const refLinkEl=document.getElementById('refLink');
 
 let miningValue=0;
 let multiplier=1;
-
 diffEl.textContent=blockchain.difficulty;
 
 // ===== UTILS =====
@@ -182,7 +180,7 @@ async function refreshAddress(){
     if(w && w.account && w.account.address){
       addrEl.textContent=w.account.address;
       [sendBtn, addBlockBtn, withdrawBtn, depositBtn].forEach(b=>b.disabled=false);
-      ctx.logPrivate(); // private logging
+      ctx.logPrivate();
       console.log("Wallet connected:", w.account.address);
       return w.account.address;
     }
@@ -192,7 +190,6 @@ async function refreshAddress(){
   return '';
 }
 
-// wrapper ensures wallet connected
 function withWallet(cb){
   return async function(...args){
     const wallet = await refreshAddress();
