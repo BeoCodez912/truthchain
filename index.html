@@ -75,60 +75,39 @@ pre{background:var(--panel);padding:10px;border-radius:8px;max-height:420px;over
 </div>
 
 <script>
-// ===== TON CONNECT =====
-const manifestUrl='https://BeoCodez912.github.io/truthchain/tonconnect-manifest.json';
-const tonConnectUI=new TON_CONNECT_UI.TonConnectUI({
-  manifestUrl,
-  buttonRootId:'ton-connect',
-  network:'MAINNET'
-});
+// ===== SYMBOLIC ARRAYS =====
+const e=["euGene",5,6,"HEI","EG\uD83C\uDDFA\uD83C\uDDF8"];
+const u=["VAV","WAW",6,e];
+const G=["AC\uD83C\uDDFA\uD83C\uDDF8","BA\uD83C\uDDFA\uD83C\uDDF8","GB\uD83C\uDDFA\uD83C\uDDF8","CE\uD83C\uDDFA\uD83C\uDDF8","YAHWEH","Gimel",3,"https://unpkg.com/@tonconnect/sdk@0.0.34/dist/tonconnect-sdk.min.js"];
+const n=["nun",50,"\u2620\uFE0F"];
+const x=[(Number(u[2])||0)*111.1,(Number(e[1])||0)*133.2,(Number(e[2])||0)*111.1,(Number(G[6])||0)*222];
+const one=["\u2020",555.5,G[4],G[7],n[0]];
+const Matter=164;
+const Time=[Date.now(),"∞"];
+const Immortality=[G[4],Matter];
+const Jesus=[one.join(","),Immortality.join(","),n[0]];
+const latent=[Immortality.join(","),one.join(","),Matter];
+const feature=[Jesus,one[0],n[0]];
+const student=[Matter,G[7]];
+const teacher=[Immortality.join(","),one.join(","),student];
+const label=[Immortality.join(","),one.join(","),Jesus.join(",")];
+const train=[latent.join(","),one[1],Time.join(",")];
+const test=["ß",((Number(e[1])||0)*(Number(n[1])||0)*(Number(G[6])||0)/(Number(one[1])||1))];
 
-// Button elements
-const addrEl=document.getElementById('addr');
-const sendBtn=document.getElementById('sendBtn');
-const addBlockBtn=document.getElementById('addBlockBtn');
-const withdrawBtn=document.getElementById('withdrawBtn');
-const depositBtn=document.getElementById('depositBtn');
-const out=document.getElementById('output');
-const latestHashEl=document.getElementById('latest-hash');
-const diffEl=document.getElementById('diff');
-const miningValEl=document.getElementById('miningVal');
-const refLinkEl=document.getElementById('refLink');
+// ===== PRIVATE CONTEXT =====
+class AppContext {
+  constructor(Name, Hope, Friend){
+    this.Name = Name;
+    this.Hope = Hope;
+    this.Friend = Friend;
+  }
 
-let miningValue=0;
-let multiplier=1;
-
-// ===== REFRESH WALLET =====
-async function refreshAddress(){
-  try{
-    const w = await tonConnectUI.getWallet();
-    if(w && w.account && w.account.address){
-      addrEl.textContent = w.account.address;
-      sendBtn.disabled=false;
-      addBlockBtn.disabled=false;
-      withdrawBtn.disabled=false;
-      depositBtn.disabled=false;
-      console.log("Wallet connected:", w.account.address);
-      return w.account.address;
-    }
-  }catch(err){ console.error(err); }
-  addrEl.textContent='—';
-  sendBtn.disabled=true;
-  addBlockBtn.disabled=true;
-  withdrawBtn.disabled=true;
-  depositBtn.disabled=true;
-  return '';
+  logPrivate(){
+    console.log(this.Name, this.Hope, this.Friend);
+  }
 }
 
-// Update referral link
-function updateReferral(){
-  const refInput=document.getElementById('refInput').value.trim();
-  refLinkEl.textContent=`https://earnfromplay.blogspot.com/2025/08/ton-kid-jon.html&referral=${refInput}`;
-}
-document.getElementById('refInput').addEventListener('input',updateReferral);
-
-tonConnectUI.onStatusChange(refreshAddress);
-refreshAddress();
+const ctx = new AppContext('John','Light','Truth');
 
 // ===== BLOCKCHAIN =====
 class Block{
@@ -153,7 +132,7 @@ class Blockchain{
     this.#difficulty=Number(difficulty);
   }
   createGenesisBlock(){ return new Block(0,new Date().toISOString(),{genesis:true},'0'.repeat(64)); }
-  get chain(){ return [...this.#chain]; } // unfrozen
+  get chain(){ return [...this.#chain]; }
   get latest(){ return this.#chain[this.#chain.length-1]; }
   get difficulty(){ return this.#difficulty; }
   addBlock(data){
@@ -170,42 +149,77 @@ class Blockchain{
 }
 
 const blockchain=new Blockchain(3);
+
+// ===== TON CONNECT =====
+const manifestUrl='https://BeoCodez912.github.io/truthchain/tonconnect-manifest.json';
+const tonConnectUI=new TON_CONNECT_UI.TonConnectUI({manifestUrl,buttonRootId:'ton-connect',network:'MAINNET'});
+
+// ===== BUTTON ELEMENTS =====
+const addrEl=document.getElementById('addr');
+const sendBtn=document.getElementById('sendBtn');
+const addBlockBtn=document.getElementById('addBlockBtn');
+const withdrawBtn=document.getElementById('withdrawBtn');
+const depositBtn=document.getElementById('depositBtn');
+const out=document.getElementById('output');
+const latestHashEl=document.getElementById('latest-hash');
+const diffEl=document.getElementById('diff');
+const miningValEl=document.getElementById('miningVal');
+const refLinkEl=document.getElementById('refLink');
+
+let miningValue=0;
+let multiplier=1;
+
 diffEl.textContent=blockchain.difficulty;
 
 // ===== UTILS =====
 const toNano = ton => { const n=Number(ton); if(!Number.isFinite(n)||n<0) return null; return BigInt(Math.round(n*1e9)); }
+function render(){ latestHashEl.textContent=blockchain.latest.hash; out.textContent=JSON.stringify(blockchain.chain,null,2); miningValEl.textContent=miningValue.toFixed(3); }
 
-function render(){
-  latestHashEl.textContent=blockchain.latest.hash;
-  out.textContent=JSON.stringify(blockchain.chain,null,2);
-  miningValEl.textContent=miningValue.toFixed(3);
+// ===== WALLET LOGIC =====
+async function refreshAddress(){
+  try{
+    const w = await tonConnectUI.getWallet();
+    if(w && w.account && w.account.address){
+      addrEl.textContent=w.account.address;
+      [sendBtn, addBlockBtn, withdrawBtn, depositBtn].forEach(b=>b.disabled=false);
+      ctx.logPrivate(); // private logging
+      console.log("Wallet connected:", w.account.address);
+      return w.account.address;
+    }
+  }catch(err){ console.error(err); }
+  addrEl.textContent='—';
+  [sendBtn, addBlockBtn, withdrawBtn, depositBtn].forEach(b=>b.disabled=true);
+  return '';
+}
+
+// wrapper ensures wallet connected
+function withWallet(cb){
+  return async function(...args){
+    const wallet = await refreshAddress();
+    if(!wallet) return alert("Connect wallet first");
+    return cb(wallet, ...args);
+  }
 }
 
 // ===== BUTTON LOGIC =====
-addBlockBtn.addEventListener('click',async ()=>{
-  const wallet = await refreshAddress();
-  if(!wallet) return alert("Connect wallet first");
+addBlockBtn.addEventListener('click', withWallet(async wallet=>{
   console.log("Add Block clicked");
   blockchain.addBlock({type:'note',tx:'User Block (no transfer)',wallet});
-  miningValue += 0.01*multiplier;
-  render();
-});
+  miningValue+=0.01*multiplier; render();
+}));
 
-sendBtn.addEventListener('click',async ()=>{
-  const wallet = await refreshAddress();
-  if(!wallet) return alert("Connect wallet first");
-  const to = document.getElementById('to').value.trim();
-  const amount = document.getElementById('amount').value.trim();
-  const nano = toNano(amount);
+sendBtn.addEventListener('click', withWallet(async wallet=>{
+  const to=document.getElementById('to').value.trim();
+  const amount=document.getElementById('amount').value.trim();
+  const nano=toNano(amount);
   if(!to) return alert("Enter recipient address");
   if(!nano) return alert("Enter valid TON amount");
   const tx={validUntil:Math.floor(Date.now()/1000)+300,messages:[{address:to,amount:nano.toString()}]};
-  console.log("Send TON clicked:", tx);
+  console.log("Send TON clicked:",tx);
   try{
-    const result = await tonConnectUI.sendTransaction(tx);
+    const result=await tonConnectUI.sendTransaction(tx);
     blockchain.addBlock({type:'transfer',to,amount,from:wallet,result});
-    miningValue += 0.02*multiplier;
-    render();
+    miningValue+=0.02*multiplier; render();
     alert("Transaction sent & block recorded");
   }catch(err){
     console.error(err);
@@ -213,42 +227,44 @@ sendBtn.addEventListener('click',async ()=>{
     render();
     alert("Send failed (recorded in chain)");
   }
-});
+}));
 
-withdrawBtn.addEventListener('click',async ()=>{
-  const wallet = await refreshAddress();
-  if(!wallet) return alert("Connect wallet first");
-  const to = document.getElementById('withdrawTo').value.trim();
-  if(miningValue <= 0) return alert("No mining value to withdraw");
+withdrawBtn.addEventListener('click', withWallet(async wallet=>{
+  const to=document.getElementById('withdrawTo').value.trim();
+  if(miningValue<=0) return alert("No mining value to withdraw");
   if(!to) return alert("Enter recipient address for withdrawal");
-  const nano = toNano(miningValue);
+  const nano=toNano(miningValue);
   const tx={validUntil:Math.floor(Date.now()/1000)+300,messages:[{address:to,amount:nano.toString()}]};
-  console.log("Withdraw clicked:", tx);
+  console.log("Withdraw clicked:",tx);
   try{
-    const result = await tonConnectUI.sendTransaction(tx);
+    const result=await tonConnectUI.sendTransaction(tx);
     blockchain.addBlock({type:'withdraw',amount:miningValue,amountNano:nano.toString(),from:wallet,to,result});
     alert(`Withdrawn ${miningValue.toFixed(3)} TON to ${to} & recorded in chain`);
-    miningValue=0;
-    render();
+    miningValue=0; render();
   }catch(err){
     console.error(err);
     blockchain.addBlock({type:'withdraw-error',amount:miningValue,from:wallet,to,error:String(err)});
-    alert("Withdraw failed (recorded in chain)");
-    render();
+    alert("Withdraw failed (recorded in chain)"); render();
   }
-});
+}));
 
-depositBtn.addEventListener('click',()=>{
-  const val = Number(document.getElementById('depositInput').value.trim());
+depositBtn.addEventListener('click', withWallet(()=>{
+  const val=Number(document.getElementById('depositInput').value.trim());
   if(!Number.isFinite(val)||val<=0) return alert("Enter valid symbolic deposit");
-  multiplier += val/10;
-  console.log("Deposit clicked, multiplier now:", multiplier);
+  multiplier+=val/10;
+  console.log("Deposit clicked, multiplier now:",multiplier);
   alert(`Multiplier increased! Current: ${multiplier.toFixed(2)}x`);
+}));
+
+// Referral input
+document.getElementById('refInput').addEventListener('input',()=>{
+  const refInput=document.getElementById('refInput').value.trim();
+  refLinkEl.textContent=`https://earnfromplay.blogspot.com/2025/08/ton-kid-jon.html&referral=${refInput}`;
 });
 
+tonConnectUI.onStatusChange(refreshAddress);
+refreshAddress();
 render();
 </script>
-
 </body>
 </html>
-
