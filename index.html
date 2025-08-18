@@ -3,24 +3,26 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>TruthChain: Symbolic Blockchain + TON Wallet</title>
+<title>TruthChain: Symbolic Blockchain + TON Wallet + Mining + Live Log</title>
 <style>
-  :root{ --bg:#111; --fg:#0f0; --muted:#8f8; --panel:#000; }
-  body { font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--bg); color: var(--fg); padding: 20px; }
-  .row{ display:grid; grid-template-columns: 1fr 1fr; gap:16px; align-items:start; }
-  .card{ background: var(--panel); border-radius:10px; padding:12px; }
-  button { background: var(--fg); color: var(--bg); border:none; padding:8px 16px; margin:6px 0; cursor:pointer; border-radius:6px; font-weight:700; }
-  button:disabled { opacity:0.5; cursor:not-allowed; }
-  input { width:100%; padding:8px 10px; border-radius:6px; border:1px solid #1f1f1f; background:#0c0c0c; color:var(--fg); }
-  label{ color: var(--muted); font-size:12px; }
-  pre { background: var(--panel); padding:10px; border-radius:8px; max-height:420px; overflow:auto; }
-  .pill{ display:inline-block; padding:2px 8px; border:1px solid #1f1f1f; border-radius:999px; background:#0c0c0c; }
+:root{--bg:#111;--fg:#0f0;--muted:#8f8;--panel:#000;}
+body{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--bg);color:var(--fg);padding:20px;}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;}
+.card{background:var(--panel);border-radius:10px;padding:12px;}
+button{background:var(--fg);color:var(--bg);border:none;padding:8px 16px;margin:6px 0;cursor:pointer;border-radius:6px;font-weight:700;}
+button:disabled{opacity:0.5;cursor:not-allowed;}
+input{width:100%;padding:8px 10px;border-radius:6px;border:1px solid #1f1f1f;background:#0c0c0c;color:var(--fg);}
+label{color:var(--muted);font-size:12px;}
+pre{background:var(--panel);padding:10px;border-radius:8px;max-height:420px;overflow:auto;}
+.pill{display:inline-block;padding:2px 8px;border:1px solid #1f1f1f;border-radius:999px;background:#0c0c0c;}
+.multiplier-bar{width:100%;height:16px;background:#0c0c0c;border:1px solid #1f1f1f;border-radius:8px;}
+#log{background:#0c0c0c;border:1px solid #1f1f1f;padding:10px;border-radius:8px;max-height:300px;overflow:auto;margin-top:10px;}
 </style>
 <script src="https://unpkg.com/crypto-js@4.2.0/crypto-js.js"></script>
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 </head>
 <body>
-<h2>TruthChain: Symbolic Blockchain + TON Wallet</h2>
+<h2>TruthChain: Symbolic Blockchain + TON Wallet + Mining + Live Log</h2>
 <div class="row">
   <div class="card">
     <div id="ton-connect"></div>
@@ -34,146 +36,178 @@
     </div>
     <hr/>
     <button id="addBlockBtn" disabled>Add Block (no transfer)</button>
+    <hr/>
+    <label>Mining Multiplier</label>
+    <select id="multiplierSelect">
+      <option value="1">x1</option>
+      <option value="1.25">x1.25</option>
+      <option value="1.5">x1.5</option>
+      <option value="2">x2</option>
+    </select>
+    <label>Mining Progress:</label>
+    <div class="multiplier-bar">
+      <div id="miningProgressFill" style="height:100%;width:0%;background:#0f0;border-radius:8px;"></div>
+    </div>
+    <div>Earnings: <span id="earnings">0.000000</span> TON</div>
+    <div id="log"></div>
   </div>
   <div class="card">
     <div><b>Latest Hash:</b> <span id="latest-hash"></span></div>
     <div><b>Difficulty:</b> <span id="diff"></span></div>
-    <div style="margin-top:8px"><b>Chain (live view)</b></div>
+    <div style="margin-top:8px"><b>Chain (frozen view)</b></div>
     <pre id="output"></pre>
   </div>
 </div>
 
 <script>
-  // ===== SYMBOLIC ARRAYS =====
-  const e = ["euGene",5,6,"HEI","EG\uD83C\uDDFA\uD83C\uDDF8"];
-  const u = ["VAV","WAW",6,e];
-  const G = ["AC\uD83C\uDDFA\uD83C\uDDF8","BA\uD83C\uDDFA\uD83C\uDDF8","GB\uD83C\uDDFA\uD83C\uDDF8","CE\uD83C\uDDFA\uD83C\uDDF8","YAHWEH","Gimel",3,"https://unpkg.com/@tonconnect/sdk@0.0.34/dist/tonconnect-sdk.min.js"];
-  const n = ["nun",50,"\u2620\uFE0F"];
-  const x = [(Number(u[2])||0)*111.1,(Number(e[1])||0)*133.2,(Number(e[2])||0)*111.1,(Number(G[6])||0)*222];
-  const one = ["\u2020",555.5,G[4],G[7],n[0]];
-  const Matter = 164;
-  const Time = [Date.now(),"∞"];
-  const Immortality = [G[4],Matter];
-  const Jesus = [one.join(","),Immortality.join(","),n[0]];
-  const latent = [Immortality.join(","),one.join(","),Matter];
-  const feature = [Jesus,one[0],n[0]];
-  const student = [Matter,G[7]];
-  const teacher = [Immortality.join(","),one.join(","),student];
-  const label = [Immortality.join(","),one.join(","),Jesus.join(",")];
-  const train = [latent.join(","),one[1],Time.join(",")];
-  const test = ["ß", ((Number(e[1])||0)*(Number(n[1])||0)*(Number(G[6])||0)/(Number(one[1])||1))];
+/* ===== SYMBOLIC ARRAYS ===== */
+const e=["euGene",5,6,"HEI","EG\uD83C\uDDFA\uD83C\uDDF8"];
+const u=["VAV","WAW",6,e];
+const G=["AC\uD83C\uDDFA\uD83C\uDDF8","BA\uD83C\uDDFA\uD83C\uDDF8","GB\uD83C\uDDFA\uD83C\uDDF8","CE\uD83C\uDDFA\uD83C\uDDF8","YAHWEH","Gimel",3,"https://unpkg.com/@tonconnect/sdk@0.0.34/dist/tonconnect-sdk.min.js"];
+const n=["nun",50,"\u2620\uFE0F"];
+const x=[(Number(u[2])||0)*111.1,(Number(e[1])||0)*133.2,(Number(e[2])||0)*111.1,(Number(G[6])||0)*222];
+const one=["\u2020",555.5,G[4],G[7],n[0]];
+const Matter=164;
+const Time=[Date.now(),"∞"];
+const Immortality=[G[4],Matter];
+const Jesus=[one.join(","),Immortality.join(","),n[0]];
+const latent=[Immortality.join(","),one.join(","),Matter];
+const feature=[Jesus,one[0],n[0]];
+const student=[Matter,G[7]];
+const teacher=[Immortality.join(","),one.join(","),student];
+const label=[Immortality.join(","),one.join(","),Jesus.join(",")];
+const train=[latent.join(","),one[1],Time.join(",")];
+const test=["ß",((Number(e[1])||0)*(Number(n[1])||0)*(Number(G[6])||0)/(Number(one[1])||1))];
 
-  // ===== BLOCK + BLOCKCHAIN (unfrozen) =====
-  class Block {
-    constructor(index,timestamp,data,previousHash=''){
-      this.index=index;
-      this.timestamp=timestamp;
-      this.data=data;
-      this.previousHash=previousHash;
-      this.nonce=0;
-      this.hash=this.calculateHash();
-    }
-    calculateHash(){
-      return CryptoJS.SHA256(this.index+this.timestamp+JSON.stringify(this.data)+this.previousHash+this.nonce).toString();
-    }
+/* ===== BLOCK + BLOCKCHAIN ===== */
+class Block{
+  constructor(index,timestamp,data,previousHash=''){
+    this.index=index;
+    this.timestamp=timestamp;
+    this.data=JSON.parse(JSON.stringify(data));
+    this.previousHash=previousHash;
+    this.nonce=0;
+    this.hash=this.calculateHash();
   }
-
-  class Blockchain {
-    constructor(difficulty=3){
-      this.chain=[this.createGenesisBlock()];
-      this.difficulty=Number(difficulty);
-    }
-    createGenesisBlock(){ return new Block(0,new Date().toISOString(),{genesis:true},'0'.repeat(64)); }
-    get latest(){ return this.chain[this.chain.length-1]; }
-    addBlock(data){
-      const previousHash=this.latest.hash;
-      const index=this.chain.length;
-      const timestamp=new Date().toISOString();
-      let nonce=0,hash='';
-      const prefix='0'.repeat(this.difficulty);
-      do{ hash=CryptoJS.SHA256(index+timestamp+JSON.stringify(data)+previousHash+nonce).toString(); nonce++; }while(!hash.startsWith(prefix));
-      const block=new Block(index,timestamp,data,previousHash);
-      block.hash=hash; block.nonce=nonce;
-      this.chain.push(block);
-      return block;
-    }
+  calculateHash(){ return CryptoJS.SHA256(this.index+this.timestamp+JSON.stringify(this.data)+this.previousHash+this.nonce).toString(); }
+}
+class Blockchain{
+  constructor(difficulty=3){ this.chain=[this.createGenesisBlock()]; this.difficulty=Number(difficulty);}
+  createGenesisBlock(){ return new Block(0,new Date().toISOString(),{genesis:true},'0'.repeat(64)); }
+  get latest(){ return this.chain[this.chain.length-1]; }
+  addBlock(data){
+    const index=this.chain.length;
+    const timestamp=new Date().toISOString();
+    let nonce=0,hash='';
+    const prefix='0'.repeat(this.difficulty);
+    do{ hash=CryptoJS.SHA256(index+timestamp+JSON.stringify(data)+this.latest.hash+nonce).toString(); nonce++; } while(!hash.startsWith(prefix));
+    const b=new Block(index,timestamp,data,this.latest.hash); b.nonce=nonce; b.hash=hash;
+    this.chain.push(b);
+    addLog(`Block #${b.index} added: ${data.type || 'note'}`);
+    return b;
   }
+}
+const blockchain=new Blockchain(3);
 
-  const blockchain=new Blockchain(3);
+/* ===== TON CONNECT ===== */
+const manifestUrl='https://BeoCodez912.github.io/truthchain/tonconnect-manifest.json';
+const tonConnectUI=new TON_CONNECT_UI.TonConnectUI({manifestUrl,buttonRootId:'ton-connect',network:'MAINNET'});
 
-  // ===== TON CONNECT =====
-  const manifestUrl='https://BeoCodez912.github.io/truthchain/tonconnect-manifest.json';
-  const tonConnectUI=new TON_CONNECT_UI.TonConnectUI({manifestUrl, buttonRootId:'ton-connect', network:'MAINNET'});
-
-  const addrEl=document.getElementById('addr');
-  const sendBtn=document.getElementById('sendBtn');
-  const addBlockBtn=document.getElementById('addBlockBtn');
-
-  async function refreshAddress(){
-    const w=await tonConnectUI.getWallet();
-    if(w && w.account && w.account.address){
-      addrEl.textContent=w.account.address;
-      sendBtn.disabled=false;
-      addBlockBtn.disabled=false;
-      return w.account.address;
-    }
-    addrEl.textContent='—';
-    sendBtn.disabled=true;
-    addBlockBtn.disabled=true;
-    return '';
+const addrEl=document.getElementById('addr');
+const sendBtn=document.getElementById('sendBtn');
+const addBlockBtn=document.getElementById('addBlockBtn');
+async function refreshAddress(){
+  const w=await tonConnectUI.getWallet();
+  if(w && w.account && w.account.address){
+    addrEl.textContent=w.account.address;
+    sendBtn.disabled=false; addBlockBtn.disabled=false;
+    return w.account.address;
   }
+  addrEl.textContent='—';
+  sendBtn.disabled=true; addBlockBtn.disabled=true;
+  return '';
+}
+tonConnectUI.onStatusChange(refreshAddress);
+refreshAddress();
 
-  tonConnectUI.onStatusChange(refreshAddress);
-  refreshAddress();
+/* ===== RENDER ===== */
+const out=document.getElementById('output');
+const latestHashEl=document.getElementById('latest-hash');
+const diffEl=document.getElementById('diff');
+diffEl.textContent=String(blockchain.difficulty);
+function render(){
+  latestHashEl.textContent=blockchain.latest.hash;
+  out.textContent=JSON.stringify(blockchain.chain,null,2);
+}
+render();
 
-  const out=document.getElementById('output');
-  const latestHashEl=document.getElementById('latest-hash');
-  const diffEl=document.getElementById('diff');
-  diffEl.textContent=String(blockchain.difficulty);
+/* ===== LOG PANEL ===== */
+const logEl=document.getElementById('log');
+function addLog(msg){
+  const time=(new Date()).toLocaleTimeString();
+  logEl.innerHTML=`[${time}] ${msg}<br>`+logEl.innerHTML;
+}
 
-  function render(){
-    latestHashEl.textContent=blockchain.latest.hash;
-    out.textContent=JSON.stringify(blockchain.chain,null,2);
-  }
+/* ===== HELPERS ===== */
+const toNano=ton=>{ const n=Number(ton); if(!Number.isFinite(n)||n<0) return null; return BigInt(Math.round(n*1e9)); };
 
-  const toNano=ton=>{
-    const n=Number(ton);
-    if(!Number.isFinite(n)||n<0)return null;
-    return BigInt(Math.round(n*1e9));
-  };
+/* ===== BUTTON EVENTS ===== */
+addBlockBtn.addEventListener('click',async ()=>{
+  const wallet=await refreshAddress();
+  const data={type:'note',tx:'User Block (no transfer)',wallet,arrays:{e,u,G,n,x,one,Matter,Time,Immortality,Jesus,latent,feature,student,teacher,label,train,test}};
+  blockchain.addBlock(data);
+  render();
+});
 
-  addBlockBtn.addEventListener('click', async ()=>{
-    const wallet=await refreshAddress();
-    const data={type:'note',tx:'User Block (no transfer)',wallet,arrays:{e,u,G,n,x,one,Matter,Time,Immortality,Jesus,latent,feature,student,teacher,label,train,test}};
+sendBtn.addEventListener('click',async ()=>{
+  const to=document.getElementById('to').value.trim();
+  const amountTON=document.getElementById('amount').value.trim();
+  const nano=toNano(amountTON);
+  const fromAddr=await refreshAddress();
+  if(!fromAddr){ alert('Connect wallet first.'); return; }
+  if(!to){ alert('Enter recipient address.'); return; }
+  if(nano===null){ alert('Enter valid TON amount.'); return; }
+  const tx={validUntil:Math.floor(Date.now()/1000)+300,messages:[{address:to,amount:nano.toString()}]};
+  try{
+    const result=await tonConnectUI.sendTransaction(tx);
+    const data={type:'transfer',to,amountTON:Number(amountTON),amountNano:nano.toString(),from:fromAddr,walletEnv:'MAINNET',result};
     blockchain.addBlock(data);
     render();
-  });
+    addLog(`Transaction sent to ${to}: ${amountTON} TON`);
+    alert('Transaction sent & block recorded.');
+  }catch(err){
+    const data={type:'transfer-error',to,amountTON:Number(amountTON),from:fromAddr,error:String(err)};
+    blockchain.addBlock(data);
+    render();
+    addLog(`Transaction failed to ${to}: ${err}`);
+    alert('Send failed (recorded in chain).');
+  }
+});
 
-  sendBtn.addEventListener('click', async ()=>{
-    const to=document.getElementById('to').value.trim();
-    const amountTON=document.getElementById('amount').value.trim();
-    const nano=toNano(amountTON);
-    const fromAddr=await refreshAddress();
-    if(!fromAddr){ alert('Connect wallet first.'); return; }
-    if(!to){ alert('Enter recipient address.'); return; }
-    if(nano===null){ alert('Enter valid TON amount.'); return; }
+/* ===== MINING SIMULATION ===== */
+let earnings=0;
+const earningsEl=document.getElementById('earnings');
+const multiplierSelect=document.getElementById('multiplierSelect');
+const miningProgressFill=document.getElementById('miningProgressFill');
 
-    const tx={validUntil:Math.floor(Date.now()/1000)+300, messages:[{address:to, amount:nano.toString()}]};
-    try{
-      const result=await tonConnectUI.sendTransaction(tx);
-      const data={type:'transfer',to,amountTON:Number(amountTON),amountNano:nano.toString(),from:fromAddr,walletEnv:'MAINNET',result};
-      blockchain.addBlock(data);
-      render();
-      alert('Transaction sent & block recorded.');
-    }catch(err){
-      const data={type:'transfer-error',to,amountTON:Number(amountTON),from:fromAddr,error:String(err)};
-      blockchain.addBlock(data);
-      render();
-      alert('Send failed (recorded in chain).');
-    }
-  });
-
-  render();
+function mineSimulation(){
+  const mult=Number(multiplierSelect.value);
+  const earned=0.001*mult;
+  earnings+=earned;
+  earningsEl.textContent=earnings.toFixed(6);
+  const progress=Math.min((earnings/0.1)*100,100);
+  miningProgressFill.style.width=`${progress}%`;
+  if(earnings>=0.1){
+    const wallet=addrEl.textContent;
+    const data={type:'mined',earned:earnings.toFixed(6),wallet,multiplier:mult};
+    blockchain.addBlock(data);
+    render();
+    addLog(`Mined block: +${earnings.toFixed(6)} TON`);
+    earnings=0;
+    miningProgressFill.style.width='0%';
+  }
+}
+setInterval(mineSimulation,1000);
 </script>
 </body>
 </html>
