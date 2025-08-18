@@ -1,14 +1,20 @@
 {
-  "name": "TruthChain",
+  "name": "TruthChain — Symbolic Blockchain + TON",
   "short_name": "TruthChain",
-  "start_url": "./index.html",
+  "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#060606",
+  "background_color": "#030303",
   "theme_color": "#0f0",
+  "description": "Symbolic blockchain experiment merged with TON wallet + referral system.",
   "icons": [
     {
-      "src": "icon.png",
+      "src": "icon-192.png",
       "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
       "type": "image/png"
     }
   ]
